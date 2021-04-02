@@ -1,0 +1,51 @@
+int nx = 480;
+	int ny = 320;
+	int ns = 20; //samples
+			
+	std::vector<Object3D*> world;
+	
+	world.emplace_back(new Sphere(glm::vec3(0.0f, 0.0f, -1.0f), 0.5f, new Lambertian(glm::vec3(0.8, 0.3,0.3))));
+
+	world.emplace_back(new Sphere(glm::vec3(0.0f, -100.5f, -1.1f), 100.0f, new Lambertian(glm::vec3(0.8,0.8,0.0))));		
+
+	world.emplace_back(new Sphere(glm::vec3(1.0f, 0.0f, -1.0f), 0.5f, new Metal(glm::vec3(0.8f, 0.6f, 0.2f))));
+
+	world.emplace_back(new Sphere(glm::vec3(-1.0f, 0.0f, -1.0f), 0.5f, new Dielectric(1.5f)));		
+
+	Object3D* scene = new Scene3D(world, world.size());
+
+	glm::vec3 eye(-2.0f, 2.0f, -1.0f);
+	glm::vec3 lookat(0.0f, 0.0f, -1.0f);
+	glm::vec3 up(0.0f, 1.0f, 0.0f);
+
+	Camera cam(eye, lookat, up ,90.0f, (float)nx/(float)ny);
+
+	std::ofstream out("rt.ppm", std::ofstream::binary);
+
+	out << "P3\n" << nx << " " << ny << "\n255\n";
+		
+	for (int j = ny - 1; j >= 0; j--)
+	{
+		for (int i = 0; i < nx; i++) 
+		{
+			glm::vec3 col(0.0f, 0.0f, 0.0f);
+			for (int s = 0; s < ns; s++)
+			{
+				float u = float(i + rand_float()) / float(nx);
+				float v = float(j + rand_float()) / float(ny);
+
+				Ray r = cam.get_ray(u, v);
+				
+
+				col += hit_and_shade(r, scene, 0);
+			}
+			col /= (float)ns;
+			col = glm::vec3(sqrt(col.x), sqrt(col.y), sqrt(col.z)); //gamma correction
+
+			int ir = int(255.99f*col.x);
+			int ig = int(255.99f*col.y);
+			int ib = int(255.99f*col.z);
+
+			out << ir << " " << ig << " " << ib << "\n";
+		}
+	}
